@@ -128,7 +128,6 @@ const CourseInfo = {
   function createLearnerID(submissions,ag) {
     submissions.forEach(element => {
       let index = learnersInfo.findIndex(student => student.id === element.learner_id);
-  
       if (index === -1) {
         learnersInfo.push({
           id: element.learner_id,
@@ -142,17 +141,47 @@ const CourseInfo = {
         score: element.submission.score
       });
     });
-    learnersGrade(learnersInfo,ag);
+   learnersGrade(learnersInfo,ag);
   }
   function learnersGrade(data,ag)
   {
+    const learnersData = [];
     for (i in data)
     {
-      console.log(data[i].submissions);
-      const totalScore = data[i].submissions.reduce((sum, student) => sum + student.score, 0);
-
-      console.log(totalScore);
+      let totalAssignmentscore = 0;
+      let totalScore = 0;
+      const gradedAssignment = {};
+      for(let j = 0; j < data[i].submissions.length; j++)
+      {
+        for(let k = 0; k < ag.assignments.length; k++)
+        {
+          if(data[i].submissions[j].assignment_id === ag.assignments[k].id)
+            {
+              if(data[i].submissions[j].submitted_at === ag.assignments[j].due_at)
+              {
+                gradedAssignment[data[i].submissions[j].assignment_id] = data[i].submissions[j].score/ag.assignments[k].points_possible;
+                totalScore += data[i].submissions[j].score;
+                totalAssignmentscore += ag.assignments[k].points_possible;
+                break
+              }
+              else if (data[i].submissions[j].submitted_at > ag.assignments[j].due_at)
+              {
+                console.log((ag.assignments[k].points_possible/10));
+                gradedAssignment[data[i].submissions[j].assignment_id] = (data[i].submissions[j].score - (ag.assignments[k].points_possible/10)) /ag.assignments[k].points_possible;
+                totalScore += data[i].submissions[j].score - ag.assignments[k].points_possible/10;
+                totalAssignmentscore += ag.assignments[k].points_possible;
+                break
+              }
+            }
+        }
+      }
+      learnersData.push({
+        id: data[i].id,
+        avg: totalScore/totalAssignmentscore,
+        gradedAssignment
+      });
     }
+    console.log(learnersData);
   }
   
   const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
